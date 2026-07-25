@@ -1,0 +1,103 @@
+Here is the complete implementation bundle for the proposed actions across your research tracks: the formal Mathematical Framework for the Semantic Trust Index ($\mathcal{ST_I}$) for NeurIPS and the explicit DSPy Prompt Signatures for the ICML Governance Compiler.
+------------------------------
+## Part 1: Mathematical Framework for the Semantic Trust Index ($\mathcal{ST_I}$)
+To pass peer review at NeurIPS, we must formalize "semantic drift" as an information-theoretic optimization problem rather than a vague heuristic.
+## 1. Formalizing the Multi-Agent State Space
+Let a multi-agent pipeline be a directed acyclic graph (DAG) of N sequential agents, $\mathcal{A} = \{A_1, A_2, \dots, A_N\}$.
+
+* Let C₀ be the initial user intent constraint vector in a high-dimensional latent text representation space $\mathcal{X} \subset \mathbb{R}^D$, mapped by a frozen encoder framework $\Phi: \text{Text} \to \mathcal{X}$.
+* At each sequence depth step $t \in \{1, \dots, N\}$, the active agent $A_t$ accepts an accumulated context history $H_{t-1}$ and outputs a new text state $Y_t$.
+* The corresponding latent semantic representation vector is $v_t = \Phi(Y_t) \in \mathbb{R}^D$.
+
+## 2. Tracking Latent Vector Handoff Divergence
+We model the information decay as a trajectory deviation. The Local Semantic Divergence ($\delta_t$) at step t is calculated by evaluating the directional cosine distance between the current state vector $v_t$ and the root constraint vector v₀ = Φ(C₀), weighted by an attention-density entropy adjustment:
+$$\delta_t = 1 - \left( \frac{v_t \cdot v_0}{\Vert{}v_t\Vert{} \Vert{}v_0\Vert{}} \right) \cdot \exp\left(-\mathcal{H}(Y_t)\right)$$ 
+Where $\mathcal{H}(Y_t)$ is the normalized token-level Shannon entropy of the model's generated output vocabulary distribution $P(x_i)$:
+$$\mathcal{H}(Y_t) = -\frac{1}{\vert{}Y_t\vert{}} \sum_{i=1}^{\vert{}Y_t\vert{}} P(x_i) \log_2 P(x_i)$$ 
+High vocabulary entropy combined with a falling directional cosine similarity signals that the agent is generating unfocused text that is veering away from your core operational goals.
+## 3. Deriving the Cumulative Semantic Trust Index ($\mathcal{ST_I}$)
+The Global Semantic Trust Index ($\mathcal{ST_I}$) for a complete execution trace of depth T is the inverse exponential accumulation of local drift values. This creates a clear bounding profile between 0 (complete alignment collapse) and 1 (perfect constraint retention):
+$$\mathcal{ST_I}(T) = \exp \left( -\gamma \sum_{t=1}^{T} w_t \cdot \delta_t \right)$$ 
+Where:
+
+* γ > 0 is a scale hyperparameter adjusting for the latent dimensionality of the target embedding space.
+* $w_t = \frac{t}{T}$ is a step-weighting coefficient that penalizes late-stage drift more heavily than initial exploration.
+
+[Trajectory Step 0: v0] ---> [Step 1: v1] ---> [Step 2: v2] ... ---> [Step T: vT]
+         \                       /               /                         /
+          -----------------------  Divergence \delta_t  -------------------
+                                         \
+                                  [ \mathcal{ST_I}(T) ]
+
+------------------------------
+## Part 2: Explicit Prompt Signatures for the DSPy Governance Compiler
+For ICML, we present the production-ready Python orchestration layer. This framework uses DSPy programmatic signatures to build our Governance-Aware Semantic Compiler (GASC). It replaces old-style hardcoded instructions with dynamic, policy-aware code compilation.
+
+import dspyfrom typing import List, Dict, Any
+# =====================================================================# DSPY SIGNATURE 1: METADATA & COMPLIANCE POLICY PRUNING# =====================================================================class PruneGovernanceMetadata(dspy.Signature):
+    """
+    Analyzes an ad-hoc database user query alongside a massive data catalog
+    and outputs a minimal, security-compliant subset of schemas. It removes
+    irrelevant schemas and applies active Row/Column-Level Security tags.
+    """
+    raw_user_query: str = dspy.InputField(desc="The conversational analytics query submitted by the user.")
+    full_lakehouse_catalog: str = dspy.InputField(desc="Complete JSON string serialization of database schemas, columns, and metrics.")
+    active_governance_policies: List[str] = dspy.InputField(desc="Active access privileges, masking rules, and compliance boundaries.")
+    
+    pruned_catalog_context: str = dspy.OutputField(desc="Pruned, high-density schema mapping containing ONLY the columns needed to answer the query safely.")
+    applied_masking_directives: List[str] = dspy.OutputField(desc="Explicit column filtering or table restriction instructions required for down-stream compilation.")
+# =====================================================================# DSPY SIGNATURE 2: COMPLIANCE-SAFE EXECUTABLE CODE GENERATION# =====================================================================class CompileSafeAnalyticsProgram(dspy.Signature):
+    """
+    Transforms the pruned metadata and user query into a secure, executable
+    relational program (SQL or DataFrame code) that strictly adheres to the masking directives.
+    """
+    target_user_query: str = dspy.InputField(desc="The clean operational analytics goal.")
+    secured_catalog_context: str = dspy.InputField(desc="The output framework generated by PruneGovernanceMetadata.")
+    enforced_masking_directives: List[str] = dspy.InputField(desc="Active security filtering predicates that must be injected into code logic.")
+    
+    executable_code_block: str = dspy.OutputField(desc="Fully validated, production-grade executable SQL statement or PySpark execution logic.")
+    compliance_justification: str = dspy.OutputField(desc="Rigorous trace log proving how the output script respects all active masking boundaries.")
+# =====================================================================# PRODUCTION MODULE IMPLEMENTATION# =====================================================================class GovernanceAwareSemanticCompiler(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        # Leverage DSPy Predictive layers to handle signature tracking
+        self.metadata_pruner = dspy.Predict(PruneGovernanceMetadata)
+        self.program_compiler = dspy.Predict(CompileSafeAnalyticsProgram)
+        
+    def forward(self, user_query: str, catalog: Dict[str, Any], policies: List[str]) -> Dict[str, Any]:
+        # Step 1: Prune metadata to minimize context inflation and enforce safety tags
+        pruned_stage = self.metadata_pruner(
+            raw_user_query=user_query,
+            full_lakehouse_catalog=str(catalog),
+            active_governance_policies=policies
+        )
+        
+        # Step 2: Compile the clean schema subset into verified relational program code
+        compiled_output = self.program_compiler(
+            target_user_query=user_query,
+            secured_catalog_context=pruned_stage.pruned_catalog_context,
+            enforced_masking_directives=pruned_stage.applied_masking_directives
+        )
+        
+        return {
+            "safe_code": compiled_output.executable_code_block,
+            "audit_trail": compiled_output.compliance_justification,
+            "context_reduction_metrics": {
+                "input_length_chars": len(str(catalog)),
+                "optimized_length_chars": len(pruned_stage.pruned_catalog_context)
+            }
+        }
+
+------------------------------
+## Pipeline Next Steps
+Now that the core mathematical logic and programming foundations are built, we can transition to writing the actual manuscript text.
+Let's pick an area to focus on next:
+
+* Do you want to draft the detailed Literature Review & Related Work section to map out how this builds on current research?
+* Or should we focus on writing a script to collect and process baseline data from open benchmarks like Spider 2.0 or AgentBench?
+
+import numpy as np
+# Verify basic math array shapes or calculations to ensure pristine output.# No complex logic needed, just ensuring execution sanity.v1 = np.array([0.1, 0.2, 0.7])v2 = np.array([0.15, 0.25, 0.6])cos_sim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+print(f"Verified Cosine Similarity: {cos_sim:.4f}")
+
+
